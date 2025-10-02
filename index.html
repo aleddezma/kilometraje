@@ -3,126 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Despedida de Soltera</title>
+    <title>Calculadora de Kilometraje y Costos</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .container {
+            max-width: 90%;
+            margin: auto;
+            padding: 2rem;
+        }
+        .card {
+            background-color: #2d3748;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 2px solid #4a5568;
+            background-color: #2d3748;
+            color: #e2e8f0;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: #4299e1;
+        }
+        .btn {
+            background-color: #4299e1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #3182ce;
+        }
+        .btn-google-maps {
+            background-color: #4299e1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-google-maps:hover {
+            background-color: #3182ce;
+        }
+        .result-box {
+            background-color: #1a202c;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .result-box h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .result-box .result-input-group {
+            margin-bottom: 1rem;
+        }
+        .result-box .result-input-group label {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+            font-weight: 500;
+        }
+        .result-box .result-input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 2px solid #4a5568;
+            background-color: #2d3748;
+            color: #bee3f8;
+            font-weight: 600;
+            outline: none;
+        }
+    </style>
 </head>
-<body class="admin-body">
-    <div id="login-container" class="admin-card">
-        <h1 class="admin-title">Acceso de Administrador</h1>
-        <p class="mb-4 text-gray-600">Ingresa la contraseña para gestionar la lista.</p>
-        <input type="password" id="password" placeholder="Contraseña" class="admin-input">
-        <button id="login-button" class="admin-button">Entrar</button>
-        <p id="login-error" class="text-red-500 mt-2 hidden">Contraseña incorrecta.</p>
-    </div>
+<body class="bg-gray-900 text-white">
 
-    <div id="admin-panel" class="admin-card hidden">
-        <div>
-            <h2 class="admin-title text-2xl">Añadir Invitada</h2>
-            <input type="text" id="guest-name" placeholder="Nombre Completo de la invitada" class="admin-input">
-            <button id="add-guest-button" class="admin-button">Agregar Invitada</button>
-            <p id="success-message" class="text-green-600 font-semibold mt-4 hidden">¡Invitada añadida!</p>
+<div class="container mx-auto p-8 lg:p-12">
+    <div class="card bg-gray-800 rounded-2xl shadow-xl p-6 md:p-10">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-6 text-indigo-400">Calculadora de Costos de Viaje</h1>
+        
+        <p class="text-center text-gray-400 mb-8">
+            Ingresa los parámetros para calcular y editar los valores de tu viaje.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="input-group">
+                <label for="citySelectSalida" class="block text-gray-300 font-semibold mb-2">Ciudad de Salida</label>
+                <select id="citySelectSalida" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
+                    <option value="" disabled selected>-- Elige una ciudad --</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="citySelectLlegada" class="block text-gray-300 font-semibold mb-2">Ciudad de Llegada</label>
+                <select id="citySelectLlegada" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
+                    <option value="" disabled selected>-- Elige una ciudad --</option>
+                </select>
+            </div>
         </div>
 
-        <div class="admin-guest-list">
-            <h2 class="admin-title text-2xl mb-4">Lista de Confirmadas</h2>
-            <div id="current-guests">
-                <!-- La lista de invitadas para administrar se cargará aquí -->
+        <div class="input-group mb-8">
+            <label for="customLocationInput" class="block text-gray-300 font-semibold mb-2">O ingresa un destino personalizado (ej. calle, colonia, ciudad)</label>
+            <input type="text" id="customLocationInput" placeholder="Ej. 16 de Septiembre, Col. Centro, Tampico" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="input-group mb-8 mt-6">
+            <label for="kmInput" class="block text-gray-300 font-semibold mb-2">Kilometraje de Maps (Ida)</label>
+            <input type="number" id="kmInput" placeholder="Ej. 275" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4">
+            <button onclick="calculateCost()" class="btn flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                Calcular
+            </button>
+            <button onclick="resetCalculator()" class="btn flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                Restablecer
+            </button>
+        </div>
+
+        <button onclick="openGoogleMaps()" class="btn-google-maps w-full mt-4 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM4.06 13.94a.5.5 0 00.353.146.5.5 0 00.354-.146l2.122-2.122A5.96 5.96 0 0110 6c-3.313 0-6 2.687-6 6a5.96 5.96 0 01.06-1.06zM10 14a4 4 0 110-8 4 4 0 010 8zm0-6a2 2 0 100 4 2 2 0 000-4z" />
+            </svg>
+            Abrir en Google Maps
+        </button>
+
+        <div id="resultsContainer" class="hidden mt-8">
+            <div class="result-box bg-gray-700 rounded-xl p-6 shadow-inner">
+                <h3 class="text-2xl font-bold text-center mb-4 text-green-400">Resultados</h3>
+                <div class="space-y-4">
+                    <div class="result-input-group">
+                        <label for="resultKmMaps" class="text-gray-300">Kilometraje de Maps (Ida y Vuelta):</label>
+                        <input type="text" id="resultKmMaps" class="bg-gray-800 border-gray-600 text-green-300" readonly>
+                    </div>
+                    <div class="result-input-group">
+                        <label for="resultKmReal" class="text-gray-300">Kilometraje Real (Ida y Vuelta):</label>
+                        <input type="number" id="resultKmReal" class="bg-gray-800 border-gray-600 text-green-300">
+                    </div>
+                    <div class="result-input-group">
+                        <label for="resultPrecio21" class="text-gray-300">Costo Precio GEB a 21:</label>
+                        <input type="number" id="resultPrecio21" class="bg-gray-800 border-gray-600 text-green-300">
+                    </div>
+                    <div class="result-input-group">
+                        <label for="resultPrecio24" class="text-gray-300">Costo Precio A 24:</label>
+                        <input type="number" id="resultPrecio24" class="bg-gray-800 border-gray-600 text-green-300">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="messageBox" class="mt-8 hidden">
+            <div class="bg-yellow-800 text-yellow-200 p-4 rounded-lg">
+                <p id="messageText" class="font-semibold"></p>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Importar los módulos de Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+<script>
+    // Datos de la hoja de cálculo
+    const data = [
+        {"CIUDAD": "TAMPICO", "KM DE MAPS": 0, "PRECIO GEB A 21": 0, "PRECIO A 24": 0},
+        {"CIUDAD": "SAN FELIPE ORIZATLAN", "KM DE MAPS": 275, "PRECIO GEB A 21": 962.5, "PRECIO A 24": 1100},
+        {"CIUDAD": "CD VALLES", "KM DE MAPS": 150, "PRECIO GEB A 21": 525, "PRECIO A 24": 600},
+        {"CIUDAD": "CD VICTORIA", "KM DE MAPS": 238, "PRECIO GEB A 21": 833, "PRECIO A 24": 952},
+        {"CIUDAD": "PANUCO", "KM DE MAPS": 55, "PRECIO GEB A 21": 192.5, "PRECIO A 24": 220},
+        {"CIUDAD": "HUEJUTLA", "KM DE MAPS": 169, "PRECIO GEB A 21": 591.5, "PRECIO A 24": 676},
+        {"CIUDAD": "CD. MANTE", "KM DE MAPS": 163, "PRECIO GEB A 21": 570.5, "PRECIO A 24": 652},
+        {"CIUDAD": "NARANJOS", "KM DE MAPS": 125, "PRECIO GEB A 21": 437.5, "PRECIO A 24": 500},
+        {"CIUDAD": "MONTERREY", "KM DE MAPS": 500, "PRECIO GEB A 21": 1750, "PRECIO A 24": 2000},
+        {"CIUDAD": "CD. DE MEXICO", "KM DE MAPS": 480, "PRECIO GEB A 21": 1680, "PRECIO A 24": 1920},
+        {"CIUDAD": "ALAMO", "KM DE MAPS": 130, "PRECIO GEB A 21": 455, "PRECIO A 24": 520},
+        {"CIUDAD": "CERRO AZUL", "KM DE MAPS": 150, "PRECIO GEB A 21": 525, "PRECIO A 24": 600},
+        {"CIUDAD": "OZULUAMA", "KM DE MAPS": 50, "PRECIO GEB A 21": 175, "PRECIO A 24": 200},
+        {"CIUDAD": "POTRERO DEL LLANO", "KM DE MAPS": 160, "PRECIO GEB A 21": 560, "PRECIO A 24": 640},
+        {"CIUDAD": "TAMAZUNCHALE", "KM DE MAPS": 220, "PRECIO GEB A 21": 770, "PRECIO A 24": 880},
+        {"CIUDAD": "MATAMOROS", "KM DE MAPS": 300, "PRECIO GEB A 21": 1050, "PRECIO A 24": 1200},
+        {"CIUDAD": "TEMPOAL", "KM DE MAPS": 80, "PRECIO GEB A 21": 280, "PRECIO A 24": 320},
+        {"CIUDAD": "TANTOYUCA", "KM DE MAPS": 110, "PRECIO GEB A 21": 385, "PRECIO A 24": 440},
+        {"CIUDAD": "XILITLA", "KM DE MAPS": 230, "PRECIO GEB A 21": 805, "PRECIO A 24": 920},
+        {"CIUDAD": "CHICONTEPEC", "KM DE MAPS": 170, "PRECIO GEB A 21": 595, "PRECIO A 24": 680},
+        {"CIUDAD": "POZA RICA", "KM DE MAPS": 190, "PRECIO GEB A 21": 665, "PRECIO A 24": 760},
+        {"CIUDAD": "TEPETZINTLA", "KM DE MAPS": 170, "PRECIO GEB A 21": 595, "PRECIO A 24": 680}
+    ];
 
-        // Tu configuración de Firebase ya está integrada
-        const firebaseConfig = {
-            apiKey: "AIzaSyBTxhUUF0t9TDGnyu7wlosUyzMKftaqL3k",
-            authDomain: "despedida-mariann.firebaseapp.com",
-            projectId: "despedida-mariann",
-            storageBucket: "despedida-mariann.firebasestorage.app",
-            messagingSenderId: "392700998091",
-            appId: "1:392700998091:web:165919c9576de8fcc4864e"
-        };
+    const citySelectSalida = document.getElementById('citySelectSalida');
+    const citySelectLlegada = document.getElementById('citySelectLlegada');
+    const customLocationInput = document.getElementById('customLocationInput');
+    const kmInput = document.getElementById('kmInput');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const messageBox = document.getElementById('messageBox');
+    const messageText = document.getElementById('messageText');
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const guestsCollection = collection(db, "invitadas");
+    const resultKmMaps = document.getElementById('resultKmMaps');
+    const resultKmReal = document.getElementById('resultKmReal');
+    const resultPrecio21 = document.getElementById('resultPrecio21');
+    const resultPrecio24 = document.getElementById('resultPrecio24');
 
-        const loginContainer = document.getElementById('login-container');
-        const adminPanel = document.getElementById('admin-panel');
-        const passwordInput = document.getElementById('password');
-        const loginButton = document.getElementById('login-button');
-        const loginError = document.getElementById('login-error');
-        const guestNameInput = document.getElementById('guest-name');
-        const addGuestButton = document.getElementById('add-guest-button');
-        const successMessage = document.getElementById('success-message');
-        const currentGuestsContainer = document.getElementById('current-guests');
+    // Llenar el dropdown de ciudades
+    document.addEventListener('DOMContentLoaded', () => {
+        data.forEach(cityData => {
+            const optionSalida = document.createElement('option');
+            optionSalida.textContent = cityData['CIUDAD'];
+            optionSalida.value = cityData['KM DE MAPS'];
+            citySelectSalida.appendChild(optionSalida);
+
+            const optionLlegada = document.createElement('option');
+            optionLlegada.textContent = cityData['CIUDAD'];
+            optionLlegada.value = cityData['KM DE MAPS'];
+            citySelectLlegada.appendChild(optionLlegada);
+        });
+
+        citySelectLlegada.addEventListener('change', (event) => {
+            customLocationInput.value = '';
+            const selectedCityName = event.target.options[event.target.selectedIndex].text;
+            const selectedCity = data.find(city => city.CIUDAD === selectedCityName);
+            if (selectedCity) {
+                kmInput.value = selectedCity['KM DE MAPS'];
+            }
+        });
         
-        const ADMIN_PASSWORD = "mariann2025";
-
-        // Lógica de Login
-        loginButton.addEventListener('click', () => {
-            if (passwordInput.value === ADMIN_PASSWORD) {
-                loginContainer.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-                loadGuests();
-            } else {
-                loginError.classList.remove('hidden');
-                passwordInput.value = '';
-            }
+        customLocationInput.addEventListener('input', () => {
+            citySelectLlegada.value = '';
         });
-        passwordInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') loginButton.click(); });
+    });
 
-        // Lógica para añadir invitada
-        addGuestButton.addEventListener('click', async () => {
-            const name = guestNameInput.value.trim();
-            if (name) {
-                try {
-                    await addDoc(guestsCollection, { name: name, timestamp: serverTimestamp() });
-                    guestNameInput.value = '';
-                    successMessage.classList.remove('hidden');
-                    setTimeout(() => successMessage.classList.add('hidden'), 3000);
-                } catch (e) { console.error("Error al añadir: ", e); }
-            }
-        });
-        guestNameInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') addGuestButton.click(); });
+    function showMessage(message) {
+        messageText.textContent = message;
+        messageBox.classList.remove('hidden');
+        resultsContainer.classList.add('hidden');
+    }
 
-        // Cargar y mostrar invitadas (con opción de eliminar)
-        function loadGuests() {
-            const q = query(guestsCollection, orderBy("timestamp", "asc"));
-            onSnapshot(q, (snapshot) => {
-                currentGuestsContainer.innerHTML = '';
-                if (snapshot.empty) {
-                    currentGuestsContainer.innerHTML = '<p class="text-gray-500">Aún no hay invitadas confirmadas.</p>';
-                } else {
-                    snapshot.forEach((document) => {
-                        const guest = document.data();
-                        const guestDiv = document.createElement('div');
-                        guestDiv.className = 'admin-guest-item';
-                        
-                        const nameSpan = document.createElement('span');
-                        nameSpan.textContent = guest.name;
+    function hideMessage() {
+        messageBox.classList.add('hidden');
+    }
+    
+    function calculateCost() {
+        hideMessage();
+        const kmIda = parseFloat(kmInput.value);
 
-                        const deleteButton = document.createElement('button');
-                        deleteButton.className = 'delete-btn';
-                        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                        deleteButton.onclick = async () => {
-                            if (confirm(`¿Seguro que quieres eliminar a ${guest.name}?`)) {
-                                await deleteDoc(doc(db, "invitadas", document.id));
-                            }
-                        };
-
-                        guestDiv.appendChild(nameSpan);
-                        guestDiv.appendChild(deleteButton);
-                        currentGuestsContainer.appendChild(guestDiv);
-                    });
-                }
-            });
+        if (isNaN(kmIda) || kmIda <= 0) {
+            showMessage("Por favor, ingresa un valor de kilometraje válido y mayor que cero.");
+            return;
         }
-    </script>
+
+        const kmMaps = kmIda * 2;
+        const kmReal = kmMaps * 1.142857142857143; // 14.2857% más
+        const precio21 = kmIda * 3.5;
+        const precio24 = kmIda * 4.0;
+
+        resultKmMaps.value = `${kmMaps.toFixed(2)} KM`;
+        resultKmReal.value = kmReal.toFixed(2);
+        resultPrecio21.value = precio21.toFixed(2);
+        resultPrecio24.value = precio24.toFixed(2);
+
+        resultsContainer.classList.remove('hidden');
+    }
+
+    function resetCalculator() {
+        citySelectSalida.value = '';
+        citySelectLlegada.value = '';
+        customLocationInput.value = '';
+        kmInput.value = '';
+        resultKmMaps.value = '';
+        resultKmReal.value = '';
+        resultPrecio21.value = '';
+        resultPrecio24.value = '';
+        resultsContainer.classList.add('hidden');
+        hideMessage();
+    }
+
+    function openGoogleMaps() {
+        const salida = citySelectSalida.options[citySelectSalida.selectedIndex].text;
+        const llegada = citySelectLlegada.options[citySelectLlegada.selectedIndex].text;
+        const customLocation = customLocationInput.value.trim();
+
+        if (salida === '-- Elige una ciudad --') {
+             showMessage("Por favor, selecciona una ciudad de salida.");
+             return;
+        }
+
+        if (!llegada && !customLocation) {
+            showMessage("Por favor, selecciona una ciudad de llegada o ingresa una ubicación personalizada.");
+            return;
+        }
+        
+        const tampicoLocation = "CAT (Central de Autobuses de Tampico), Av Rosalio Bustamante 210, Col. allende, Los Pinos, 89130 Tampico, Tamps.";
+        let salidaLocation = salida;
+        let llegadaLocation = llegada;
+
+        if (salida.toUpperCase() === "TAMPICO") {
+            salidaLocation = tampicoLocation;
+        }
+
+        if (customLocation) {
+            llegadaLocation = customLocation;
+        } else if (llegada.toUpperCase() === "TAMPICO") {
+            llegadaLocation = tampicoLocation;
+        }
+
+        const mapsUrl = `https://www.google.com/maps/dir/${encodeURIComponent(salidaLocation)}/${encodeURIComponent(llegadaLocation)}`;
+        window.open(mapsUrl, '_blank');
+    }
+</script>
 </body>
 </html>
