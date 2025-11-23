@@ -3,329 +3,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Kilometraje y Costos</title>
+    <!-- Enlace al Manifiesto PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a202c">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/854/854878.png">
+    <title>Calculadora de Kilometraje TI</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Excel Export (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    
+    <!-- PDF Generation (jsPDF + AutoTable) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1a202c;
-            color: #e2e8f0;
+        body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
+        .container { max-width: 95%; margin: auto; padding: 1rem; }
+        @media(min-width: 768px) { .container { max-width: 90%; padding: 2rem; } }
+        
+        .card { background-color: #2d3748; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        
+        /* Estilos inputs */
+        input, select {
+            width: 100%; padding: 0.75rem; border-radius: 0.5rem;
+            border: 2px solid #4a5568; background-color: #2d3748;
+            color: #e2e8f0; outline: none; transition: border-color 0.2s;
         }
-        .container {
-            max-width: 90%;
-            margin: auto;
-            padding: 2rem;
-        }
-        .card {
-            background-color: #2d3748;
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border: 2px solid #4a5568;
-            background-color: #2d3748;
-            color: #e2e8f0;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-group input:focus, .input-group select:focus {
-            border-color: #4299e1;
-        }
+        input:focus, select:focus { border-color: #4299e1; }
+        
+        /* Botones Base */
         .btn {
-            background-color: #4299e1;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn:hover {
-            background-color: #3182ce;
-        }
-        .btn-google-maps {
-            background-color: #4299e1;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-google-maps:hover {
-            background-color: #3182ce;
-        }
-        .result-box {
-            background-color: #1a202c;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
-        }
-        .result-box h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        .result-box .result-input-group {
-            margin-bottom: 1rem;
-        }
-        .result-box .result-input-group label {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            display: block;
-            font-weight: 500;
-        }
-        .result-box .result-input-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border: 2px solid #4a5568;
-            background-color: #2d3748;
-            color: #bee3f8;
-            font-weight: 600;
-            outline: none;
+            padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-align: center;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white min-h-screen">
 
-<div class="container mx-auto p-8 lg:p-12">
-    <div class="card bg-gray-800 rounded-2xl shadow-xl p-6 md:p-10">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-6 text-indigo-400">Calculadora de Costos de Viaje</h1>
+<!-- Botón de Instalación PWA (Oculto por defecto) -->
+<div id="installContainer" class="hidden fixed top-4 right-4 z-50">
+    <button id="btnInstall" class="btn bg-indigo-500 hover:bg-indigo-400 text-white shadow-lg animate-pulse">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Instalar App
+    </button>
+</div>
+
+<div class="container mx-auto">
+    <div class="card bg-gray-800 rounded-2xl shadow-xl">
+        <h1 class="text-2xl md:text-3xl font-extrabold text-center mb-2 text-indigo-400">Soporte TI: Gastos de Viaje</h1>
+        <p class="text-center text-xs text-gray-400 mb-6">Versión Offline Habilitada</p>
+
+        <!-- Formulario Principal -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block text-gray-400 text-sm mb-1">Ciudad Salida</label>
+                <select id="citySelectSalida"></select>
+            </div>
+            <div>
+                <label class="block text-gray-400 text-sm mb-1">Ciudad Llegada</label>
+                <select id="citySelectLlegada"></select>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-gray-400 text-sm mb-1">Destino Personalizado (o Ticket ID)</label>
+            <input type="text" id="customLocationInput" placeholder="Ej. Cliente XYZ - Ticket #5044">
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-gray-400 text-sm mb-1">Fecha del Servicio</label>
+            <input type="date" id="tripDate">
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-gray-400 text-sm mb-1">Kilometraje Maps (Ida)</label>
+            <input type="number" id="kmInput" placeholder="0">
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-col md:flex-row gap-3 mb-4">
+            <button onclick="calculateCost()" class="btn w-full bg-indigo-600 hover:bg-indigo-700">Calcular</button>
+            <button onclick="resetCalculator()" class="btn w-full bg-gray-600 hover:bg-gray-700">Limpiar</button>
+        </div>
         
-        <p class="text-center text-gray-400 mb-8">
-            Ingresa los parámetros para calcular y editar los valores de tu viaje.
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="input-group">
-                <label for="citySelectSalida" class="block text-gray-300 font-semibold mb-2">Ciudad de Salida</label>
-                <select id="citySelectSalida" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
-                    <option value="" disabled selected>-- Elige una ciudad --</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="citySelectLlegada" class="block text-gray-300 font-semibold mb-2">Ciudad de Llegada</label>
-                <select id="citySelectLlegada" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
-                    <option value="" disabled selected>-- Elige una ciudad --</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="input-group mb-8">
-            <label for="customLocationInput" class="block text-gray-300 font-semibold mb-2">O ingresa un destino personalizado (ej. calle, colonia, ciudad)</label>
-            <input type="text" id="customLocationInput" placeholder="Ej. 16 de Septiembre, Col. Centro, Tampico" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
-        </div>
-
-        <div class="input-group mb-8 mt-6">
-            <label for="kmInput" class="block text-gray-300 font-semibold mb-2">Kilometraje de Maps (Ida)</label>
-            <input type="number" id="kmInput" placeholder="Ej. 275" class="w-full bg-gray-700 text-gray-200 border-2 border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:border-indigo-500">
-        </div>
-
-        <div class="flex flex-col md:flex-row gap-4">
-            <button onclick="calculateCost()" class="btn flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                Calcular
-            </button>
-            <button onclick="resetCalculator()" class="btn flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                Restablecer
-            </button>
-        </div>
-
-        <button onclick="openGoogleMaps()" class="btn-google-maps w-full mt-4 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM4.06 13.94a.5.5 0 00.353.146.5.5 0 00.354-.146l2.122-2.122A5.96 5.96 0 0110 6c-3.313 0-6 2.687-6 6a5.96 5.96 0 01.06-1.06zM10 14a4 4 0 110-8 4 4 0 010 8zm0-6a2 2 0 100 4 2 2 0 000-4z" />
-            </svg>
-            Abrir en Google Maps
+        <button onclick="openGoogleMaps()" class="btn w-full bg-blue-600 hover:bg-blue-700 mb-6">
+            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM4.06 13.94a.5.5 0 00.353.146.5.5 0 00.354-.146l2.122-2.122A5.96 5.96 0 0110 6c-3.313 0-6 2.687-6 6a5.96 5.96 0 01.06-1.06zM10 14a4 4 0 110-8 4 4 0 010 8zm0-6a2 2 0 100 4 2 2 0 000-4z"/></svg>
+            Abrir Maps
         </button>
 
-        <div id="resultsContainer" class="hidden mt-8">
-            <div class="result-box bg-gray-700 rounded-xl p-6 shadow-inner">
-                <h3 class="text-2xl font-bold text-center mb-4 text-green-400">Resultados</h3>
-                <div class="space-y-4">
-                    <div class="result-input-group">
-                        <label for="resultKmMaps" class="text-gray-300">Kilometraje de Maps (Ida y Vuelta):</label>
-                        <input type="text" id="resultKmMaps" class="bg-gray-800 border-gray-600 text-green-300" readonly>
-                    </div>
-                    <div class="result-input-group">
-                        <label for="resultKmReal" class="text-gray-300">Kilometraje Real (Ida y Vuelta):</label>
-                        <input type="number" id="resultKmReal" class="bg-gray-800 border-gray-600 text-green-300">
-                    </div>
-                    <div class="result-input-group">
-                        <label for="resultPrecio21" class="text-gray-300">Costo Precio GEB a 21:</label>
-                        <input type="number" id="resultPrecio21" class="bg-gray-800 border-gray-600 text-green-300">
-                    </div>
-                    <div class="result-input-group">
-                        <label for="resultPrecio24" class="text-gray-300">Costo Precio A 24:</label>
-                        <input type="number" id="resultPrecio24" class="bg-gray-800 border-gray-600 text-green-300">
-                    </div>
+        <!-- Resultados -->
+        <div id="resultsContainer" class="hidden bg-gray-700 rounded-xl p-4 mb-8">
+            <h3 class="text-xl font-bold text-center text-green-400 mb-4">Resumen de Costos</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-gray-400">Total KM (Redondo)</p>
+                    <input type="text" id="resultKmReal" class="bg-gray-800 text-green-300 font-bold" readonly>
+                </div>
+                <div>
+                    <p class="text-gray-400">Costo (Tarifa 21)</p>
+                    <input type="text" id="resultPrecio21" class="bg-gray-800 text-green-300 font-bold" readonly>
                 </div>
             </div>
+            <div class="mt-4">
+                <p class="text-gray-400 text-sm">Costo (Tarifa 24)</p>
+                <input type="text" id="resultPrecio24" class="bg-gray-800 text-green-300 font-bold w-full" readonly>
+            </div>
+            <button onclick="saveToHistoryAndClear()" class="btn w-full mt-4 bg-green-600 hover:bg-green-700">Confirmar y Guardar</button>
         </div>
 
-        <div id="messageBox" class="mt-8 hidden">
-            <div class="bg-yellow-800 text-yellow-200 p-4 rounded-lg">
-                <p id="messageText" class="font-semibold"></p>
+        <!-- Mensajes -->
+        <div id="messageBox" class="hidden p-4 mb-6 rounded-lg bg-yellow-900 text-yellow-200 text-center font-bold"></div>
+
+        <!-- Historial y Reportes -->
+        <div class="mt-8 border-t border-gray-700 pt-8">
+            <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                Historial de Viajes
+                <span id="historyCount" class="bg-gray-700 text-xs px-2 py-1 rounded-full text-gray-300">0</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                <button onclick="exportToExcel()" class="btn bg-green-700 hover:bg-green-800 text-sm">
+                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Descargar Excel
+                </button>
+                <button onclick="exportToPDF()" class="btn bg-red-600 hover:bg-red-700 text-sm">
+                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Generar Reporte PDF
+                </button>
             </div>
+
+            <div id="tripHistoryContainer" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- Items del historial se generarán aquí -->
+            </div>
+            
+             <button onclick="clearHistory()" class="text-xs text-red-400 mt-4 underline w-full text-center">Borrar todo el historial</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Datos de la hoja de cálculo
-    const data = [
-        {"CIUDAD": "TAMPICO", "KM DE MAPS": 0, "PRECIO GEB A 21": 0, "PRECIO A 24": 0},
-        {"CIUDAD": "SAN FELIPE ORIZATLAN", "KM DE MAPS": 275, "PRECIO GEB A 21": 962.5, "PRECIO A 24": 1100},
-        {"CIUDAD": "CD VALLES", "KM DE MAPS": 150, "PRECIO GEB A 21": 525, "PRECIO A 24": 600},
-        {"CIUDAD": "CD VICTORIA", "KM DE MAPS": 238, "PRECIO GEB A 21": 833, "PRECIO A 24": 952},
-        {"CIUDAD": "PANUCO", "KM DE MAPS": 55, "PRECIO GEB A 21": 192.5, "PRECIO A 24": 220},
-        {"CIUDAD": "HUEJUTLA", "KM DE MAPS": 169, "PRECIO GEB A 21": 591.5, "PRECIO A 24": 676},
-        {"CIUDAD": "CD. MANTE", "KM DE MAPS": 163, "PRECIO GEB A 21": 570.5, "PRECIO A 24": 652},
-        {"CIUDAD": "NARANJOS", "KM DE MAPS": 125, "PRECIO GEB A 21": 437.5, "PRECIO A 24": 500},
-        {"CIUDAD": "MONTERREY", "KM DE MAPS": 500, "PRECIO GEB A 21": 1750, "PRECIO A 24": 2000},
-        {"CIUDAD": "CD. DE MEXICO", "KM DE MAPS": 480, "PRECIO GEB A 21": 1680, "PRECIO A 24": 1920},
-        {"CIUDAD": "ALAMO", "KM DE MAPS": 130, "PRECIO GEB A 21": 455, "PRECIO A 24": 520},
-        {"CIUDAD": "CERRO AZUL", "KM DE MAPS": 150, "PRECIO GEB A 21": 525, "PRECIO A 24": 600},
-        {"CIUDAD": "OZULUAMA", "KM DE MAPS": 50, "PRECIO GEB A 21": 175, "PRECIO A 24": 200},
-        {"CIUDAD": "POTRERO DEL LLANO", "KM DE MAPS": 160, "PRECIO GEB A 21": 560, "PRECIO A 24": 640},
-        {"CIUDAD": "TAMAZUNCHALE", "KM DE MAPS": 220, "PRECIO GEB A 21": 770, "PRECIO A 24": 880},
-        {"CIUDAD": "MATAMOROS", "KM DE MAPS": 300, "PRECIO GEB A 21": 1050, "PRECIO A 24": 1200},
-        {"CIUDAD": "TEMPOAL", "KM DE MAPS": 80, "PRECIO GEB A 21": 280, "PRECIO A 24": 320},
-        {"CIUDAD": "TANTOYUCA", "KM DE MAPS": 110, "PRECIO GEB A 21": 385, "PRECIO A 24": 440},
-        {"CIUDAD": "XILITLA", "KM DE MAPS": 230, "PRECIO GEB A 21": 805, "PRECIO A 24": 920},
-        {"CIUDAD": "CHICONTEPEC", "KM DE MAPS": 170, "PRECIO GEB A 21": 595, "PRECIO A 24": 680},
-        {"CIUDAD": "POZA RICA", "KM DE MAPS": 190, "PRECIO GEB A 21": 665, "PRECIO A 24": 760},
-        {"CIUDAD": "TEPETZINTLA", "KM DE MAPS": 170, "PRECIO GEB A 21": 595, "PRECIO A 24": 680}
+    // --- DATOS Y CONFIGURACIÓN ---
+    const citiesData = [
+        {"CIUDAD": "TAMPICO", "KM": 0}, {"CIUDAD": "SAN FELIPE ORIZATLAN", "KM": 275},
+        {"CIUDAD": "CD VALLES", "KM": 150}, {"CIUDAD": "CD VICTORIA", "KM": 238},
+        {"CIUDAD": "PANUCO", "KM": 55}, {"CIUDAD": "HUEJUTLA", "KM": 169},
+        {"CIUDAD": "CD. MANTE", "KM": 163}, {"CIUDAD": "NARANJOS", "KM": 125},
+        {"CIUDAD": "MONTERREY", "KM": 500}, {"CIUDAD": "CD. DE MEXICO", "KM": 480},
+        {"CIUDAD": "ALAMO", "KM": 130}, {"CIUDAD": "CERRO AZUL", "KM": 150},
+        {"CIUDAD": "OZULUAMA", "KM": 50}, {"CIUDAD": "POTRERO DEL LLANO", "KM": 160},
+        {"CIUDAD": "TAMAZUNCHALE", "KM": 220}, {"CIUDAD": "MATAMOROS", "KM": 300},
+        {"CIUDAD": "TEMPOAL", "KM": 80}, {"CIUDAD": "TANTOYUCA", "KM": 110},
+        {"CIUDAD": "XILITLA", "KM": 230}, {"CIUDAD": "CHICONTEPEC", "KM": 170},
+        {"CIUDAD": "POZA RICA", "KM": 190}, {"CIUDAD": "TEPETZINTLA", "KM": 170}
     ];
 
-    const citySelectSalida = document.getElementById('citySelectSalida');
-    const citySelectLlegada = document.getElementById('citySelectLlegada');
-    const customLocationInput = document.getElementById('customLocationInput');
-    const kmInput = document.getElementById('kmInput');
-    const resultsContainer = document.getElementById('resultsContainer');
-    const messageBox = document.getElementById('messageBox');
-    const messageText = document.getElementById('messageText');
+    // Variables UI
+    const el = (id) => document.getElementById(id);
+    let deferredPrompt; // Para la instalación PWA
 
-    const resultKmMaps = document.getElementById('resultKmMaps');
-    const resultKmReal = document.getElementById('resultKmReal');
-    const resultPrecio21 = document.getElementById('resultPrecio21');
-    const resultPrecio24 = document.getElementById('resultPrecio24');
-
-    // Llenar el dropdown de ciudades
+    // --- INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', () => {
-        data.forEach(cityData => {
-            const optionSalida = document.createElement('option');
-            optionSalida.textContent = cityData['CIUDAD'];
-            optionSalida.value = cityData['KM DE MAPS'];
-            citySelectSalida.appendChild(optionSalida);
-
-            const optionLlegada = document.createElement('option');
-            optionLlegada.textContent = cityData['CIUDAD'];
-            optionLlegada.value = cityData['KM DE MAPS'];
-            citySelectLlegada.appendChild(optionLlegada);
-        });
-
-        citySelectLlegada.addEventListener('change', (event) => {
-            customLocationInput.value = '';
-            const selectedCityName = event.target.options[event.target.selectedIndex].text;
-            const selectedCity = data.find(city => city.CIUDAD === selectedCityName);
-            if (selectedCity) {
-                kmInput.value = selectedCity['KM DE MAPS'];
-            }
-        });
+        // Llenar selects
+        const createOption = (city) => `<option value="${city.KM}">${city.CIUDAD}</option>`;
+        const options = '<option value="" disabled selected>-- Seleccionar --</option>' + 
+                        citiesData.map(createOption).join('');
         
-        customLocationInput.addEventListener('input', () => {
-            citySelectLlegada.value = '';
-        });
+        el('citySelectSalida').innerHTML = options;
+        el('citySelectLlegada').innerHTML = options;
+
+        // Establecer fecha hoy
+        el('tripDate').valueAsDate = new Date();
+
+        loadHistory();
+        initPWA();
     });
 
-    function showMessage(message) {
-        messageText.textContent = message;
-        messageBox.classList.remove('hidden');
-        resultsContainer.classList.add('hidden');
-    }
-
-    function hideMessage() {
-        messageBox.classList.add('hidden');
-    }
+    // Eventos cambio de ciudad
+    el('citySelectLlegada').addEventListener('change', (e) => {
+        el('customLocationInput').value = '';
+        el('kmInput').value = e.target.value;
+    });
     
+    el('customLocationInput').addEventListener('input', () => {
+        el('citySelectLlegada').value = '';
+    });
+
+    // --- LÓGICA DE NEGOCIO ---
     function calculateCost() {
-        hideMessage();
-        const kmIda = parseFloat(kmInput.value);
+        const kmIda = parseFloat(el('kmInput').value);
+        if (!kmIda || kmIda <= 0) return showMsg("Ingresa un kilometraje válido");
 
-        if (isNaN(kmIda) || kmIda <= 0) {
-            showMessage("Por favor, ingresa un valor de kilometraje válido y mayor que cero.");
-            return;
-        }
+        const kmMaps = kmIda * 2; // Ida y vuelta
+        const kmReal = kmMaps * 1.142857; // Factor de ajuste
+        const p21 = kmIda * 3.5;
+        const p24 = kmIda * 4.0;
 
-        const kmMaps = kmIda * 2;
-        const kmReal = kmMaps * 1.142857142857143; // 14.2857% más
-        const precio21 = kmIda * 3.5;
-        const precio24 = kmIda * 4.0;
+        el('resultKmReal').value = kmReal.toFixed(2);
+        el('resultPrecio21').value = `$${p21.toFixed(2)}`;
+        el('resultPrecio24').value = `$${p24.toFixed(2)}`;
+        
+        // Guardamos valores temporales en el botón para usarlos al guardar
+        el('resultsContainer').dataset.temp = JSON.stringify({
+            kmIda, kmMaps, kmReal, p21, p24
+        });
 
-        resultKmMaps.value = `${kmMaps.toFixed(2)} KM`;
-        resultKmReal.value = kmReal.toFixed(2);
-        resultPrecio21.value = precio21.toFixed(2);
-        resultPrecio24.value = precio24.toFixed(2);
+        el('resultsContainer').classList.remove('hidden');
+        el('messageBox').classList.add('hidden');
+    }
 
-        resultsContainer.classList.remove('hidden');
+    function saveToHistoryAndClear() {
+        const temp = JSON.parse(el('resultsContainer').dataset.temp);
+        const trip = {
+            id: Date.now(),
+            salida: el('citySelectSalida').options[el('citySelectSalida').selectedIndex]?.text || "Desconocido",
+            llegada: el('customLocationInput').value || el('citySelectLlegada').options[el('citySelectLlegada').selectedIndex]?.text,
+            fecha: el('tripDate').value,
+            ...temp
+        };
+
+        let history = JSON.parse(localStorage.getItem('tripHistory')) || [];
+        history.unshift(trip);
+        localStorage.setItem('tripHistory', JSON.stringify(history));
+        
+        loadHistory();
+        resetCalculator();
+        showMsg("Viaje guardado correctamente");
     }
 
     function resetCalculator() {
-        citySelectSalida.value = '';
-        citySelectLlegada.value = '';
-        customLocationInput.value = '';
-        kmInput.value = '';
-        resultKmMaps.value = '';
-        resultKmReal.value = '';
-        resultPrecio21.value = '';
-        resultPrecio24.value = '';
-        resultsContainer.classList.add('hidden');
-        hideMessage();
+        el('citySelectSalida').value = '';
+        el('citySelectLlegada').value = '';
+        el('customLocationInput').value = '';
+        el('kmInput').value = '';
+        el('resultsContainer').classList.add('hidden');
+        el('messageBox').classList.add('hidden');
     }
 
-    function openGoogleMaps() {
-        const salida = citySelectSalida.options[citySelectSalida.selectedIndex].text;
-        const llegada = citySelectLlegada.options[citySelectLlegada.selectedIndex].text;
-        const customLocation = customLocationInput.value.trim();
+    // --- REPORTES (PDF & EXCEL) ---
+    
+    // Generar PDF usando jsPDF y AutoTable
+    function exportToPDF() {
+        const history = JSON.parse(localStorage.getItem('tripHistory')) || [];
+        if (history.length === 0) return showMsg("Sin datos para reporte PDF");
 
-        if (salida === '-- Elige una ciudad --') {
-             showMessage("Por favor, selecciona una ciudad de salida.");
-             return;
-        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
 
-        if (!llegada && !customLocation) {
-            showMessage("Por favor, selecciona una ciudad de llegada o ingresa una ubicación personalizada.");
+        // Encabezado
+        doc.setFillColor(45, 55, 72); // Gris oscuro
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("Reporte de Kilometraje TI", 14, 25);
+        doc.setFontSize(10);
+        doc.text(`Generado: ${new Date().toLocaleDateString()}`, 14, 35);
+
+        // Tabla
+        const tableColumn = ["Fecha", "Ruta (Salida > Llegada)", "KM Total", "Costo ($)"];
+        const tableRows = [];
+        let totalCosto = 0;
+        let totalKM = 0;
+
+        history.forEach(trip => {
+            const tripData = [
+                trip.fecha,
+                `${trip.salida} \n-> ${trip.llegada}`,
+                trip.kmReal.toFixed(2),
+                `$${trip.p24.toFixed(2)}` // Usando tarifa 24 como ejemplo
+            ];
+            tableRows.push(tripData);
+            totalCosto += trip.p24;
+            totalKM += trip.kmReal;
+        });
+
+        // Totales al final
+        tableRows.push(["", "TOTALES ACUMULADOS", `${totalKM.toFixed(2)} KM`, `$${totalCosto.toFixed(2)}`]);
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            theme: 'grid',
+            headStyles: { fillColor: [66, 153, 225] }, // Azul Tailwind
+            styles: { fontSize: 8, cellPadding: 3 },
+            columnStyles: { 
+                1: { cellWidth: 80 }, // Columna Ruta más ancha
+                3: { fontStyle: 'bold', halign: 'right' }
+            }
+        });
+
+        // Pie de página
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setTextColor(100);
+        doc.text("Firma de Conformidad:", 14, finalY);
+        doc.line(14, finalY + 15, 80, finalY + 15); // Línea de firma
+
+        doc.save(`Reporte_Gastos_${new Date().toISOString().slice(0,10)}.pdf`);
+        showMsg("PDF descargado correctamente");
+    }
+
+    function exportToExcel() {
+        const history = JSON.parse(localStorage.getItem('tripHistory')) || [];
+        if (history.length === 0) return showMsg("Sin datos para Excel");
+
+        const wsData = [["Fecha", "Salida", "Llegada", "KM Maps", "KM Real", "Costo 21", "Costo 24"]];
+        history.forEach(t => {
+            wsData.push([t.fecha, t.salida, t.llegada, t.kmMaps, t.kmReal, t.p21, t.p24]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Gastos");
+        XLSX.writeFile(wb, "Reporte_Kilometraje.xlsx");
+    }
+
+    // --- UTILIDADES ---
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('tripHistory')) || [];
+        const container = el('tripHistoryContainer');
+        el('historyCount').innerText = history.length;
+        
+        if (history.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500 italic">No hay registros recientes.</p>`;
             return;
         }
-        
-        const tampicoLocation = "CAT (Central de Autobuses de Tampico), Av Rosalio Bustamante 210, Col. allende, Los Pinos, 89130 Tampico, Tamps.";
-        let salidaLocation = salida;
-        let llegadaLocation = llegada;
 
-        if (salida.toUpperCase() === "TAMPICO") {
-            salidaLocation = tampicoLocation;
+        container.innerHTML = history.map((t, idx) => `
+            <div class="bg-gray-700 p-4 rounded-lg border-l-4 border-indigo-500 shadow-md">
+                <div class="flex justify-between items-start mb-3 border-b border-gray-600 pb-2">
+                    <div class="overflow-hidden mr-2">
+                        <h4 class="font-bold text-indigo-300 text-lg truncate">${t.llegada}</h4>
+                        <p class="text-xs text-gray-400 font-medium">${t.fecha} <span class="mx-1 text-gray-600">|</span> Desde: ${t.salida}</p>
+                    </div>
+                    <button onclick="deleteTrip(${idx})" class="text-xs text-red-400 hover:text-red-200 bg-red-900/20 px-2 py-1 rounded border border-red-900/50 transition-colors">
+                        Eliminar
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-gray-800/50 p-2 rounded">
+                        <span class="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Distancia Maps</span>
+                        <span class="font-mono text-gray-300">${t.kmMaps.toFixed(2)} km</span>
+                    </div>
+                    <div class="bg-gray-800/50 p-2 rounded">
+                        <span class="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Distancia Real</span>
+                        <span class="font-mono text-gray-300">${t.kmReal.toFixed(2)} km</span>
+                    </div>
+                    <div class="bg-gray-800/50 p-2 rounded border border-green-900/30">
+                        <span class="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Costo (21)</span>
+                        <span class="font-bold text-green-400">$${t.p21.toFixed(2)}</span>
+                    </div>
+                    <div class="bg-gray-800/50 p-2 rounded border border-green-900/30">
+                        <span class="block text-[10px] uppercase tracking-wider text-gray-500 mb-1">Costo (24)</span>
+                        <span class="font-bold text-green-300 text-base">$${t.p24.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function deleteTrip(index) {
+        let history = JSON.parse(localStorage.getItem('tripHistory'));
+        history.splice(index, 1);
+        localStorage.setItem('tripHistory', JSON.stringify(history));
+        loadHistory();
+    }
+    
+    function clearHistory() {
+        if(confirm("¿Borrar todo el historial?")) {
+            localStorage.removeItem('tripHistory');
+            loadHistory();
+        }
+    }
+
+    function showMsg(txt) {
+        const box = el('messageBox');
+        box.innerText = txt;
+        box.classList.remove('hidden');
+        setTimeout(() => box.classList.add('hidden'), 3000);
+    }
+    
+    function openGoogleMaps() {
+        const salida = el('citySelectSalida').options[el('citySelectSalida').selectedIndex]?.text || "Ubicación Actual";
+        const llegada = el('customLocationInput').value || el('citySelectLlegada').options[el('citySelectLlegada').selectedIndex]?.text;
+        if(!llegada) return showMsg("Define un destino");
+        window.open(`https://www.google.com/maps/dir/${encodeURIComponent(salida)}/${encodeURIComponent(llegada)}`, '_blank');
+    }
+
+    // --- PWA LOGIC ---
+    function initPWA() {
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SW registrado', reg))
+                .catch(err => console.log('SW error', err));
         }
 
-        if (customLocation) {
-            llegadaLocation = customLocation;
-        } else if (llegada.toUpperCase() === "TAMPICO") {
-            llegadaLocation = tampicoLocation;
-        }
+        // Manejar instalación
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            el('installContainer').classList.remove('hidden');
+        });
 
-        const mapsUrl = `https://www.google.com/maps/dir/${encodeURIComponent(salidaLocation)}/${encodeURIComponent(llegadaLocation)}`;
-        window.open(mapsUrl, '_blank');
+        el('btnInstall').addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                el('installContainer').classList.add('hidden');
+            }
+            deferredPrompt = null;
+        });
     }
 </script>
 </body>
